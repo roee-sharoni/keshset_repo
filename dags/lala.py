@@ -3,7 +3,7 @@ from airflow.providers.standard.operators.python import PythonOperator
 from datetime import datetime
 
 with DAG(
-    dag_id="example_dag",
+    dag_id="lala_dag",
     start_date=datetime(2024, 1, 1),
     schedule=None,
     catchup=False,
