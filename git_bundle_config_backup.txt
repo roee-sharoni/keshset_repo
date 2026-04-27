@@ -1,0 +1,48 @@
+GitDagBundle approach — backup config
+======================================
+Use this if you want to switch back to Airflow pulling DAGs automatically
+from a separate private repo every 60 seconds via SSH deploy key.
+
+── docker-compose.yml environment section ──────────────────────────────────
+
+    AIRFLOW__DAG_PROCESSOR__DAG_BUNDLE_CONFIG_LIST: |
+      [
+        {
+          "name": "production",
+          "classpath": "airflow.providers.git.bundles.git.GitDagBundle",
+          "kwargs": {
+            "repo_url": "git@github.com:KeshetTvBi/airflow_keshet_updated.git",
+            "tracking_ref": "main",
+            "subdir": "dags",
+            "refresh_interval": 60
+          }
+        }
+      ]
+    # Use the mounted deploy key for all git operations inside containers
+    GIT_SSH_COMMAND: "ssh -i /home/airflow/.ssh/airflow_deploy_key -o StrictHostKeyChecking=accept-new"
+
+── docker-compose.yml volumes section ──────────────────────────────────────
+
+    - dag-bundles:/opt/airflow/dag_bundles
+    # Deploy key for cloning the private DAG repo — never committed to git
+    - ./secrets/airflow_deploy_key:/home/airflow/.ssh/airflow_deploy_key:ro
+
+── bottom of docker-compose.yml ────────────────────────────────────────────
+
+volumes:
+  mysql-data:
+  dag-bundles:
+
+── VM setup required ────────────────────────────────────────────────────────
+
+1. Generate SSH key pair on laptop:
+   ssh-keygen -t ed25519 -C "airflow-dag-bundle" -f airflow_deploy_key -N ""
+
+2. Add public key to GitHub:
+   https://github.com/KeshetTvBi/airflow_keshet_updated → Settings → Deploy keys
+   Title: Airflow DAG Bundle — read-only
+
+3. Put private key on VM:
+   mkdir -p ~/airflow/secrets
+   scp airflow_deploy_key user@vm:~/airflow/secrets/airflow_deploy_key
+   chmod 600 ~/airflow/secrets/airflow_deploy_key
