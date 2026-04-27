@@ -1,0 +1,10 @@
+apache-airflow==3.0.3
+apache-airflow-providers-git
+apache-airflow-providers-snowflake
+apache-airflow-providers-google
+apache-airflow-providers-slack
+apache-airflow-providers-postgres
+apache-airflow-providers-standard
+apache-airflow-providers-http
+pandas
+requests
