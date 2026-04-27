@@ -1,0 +1,26 @@
+name: Validate DAGs
+on: [pull_request, push]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install
+        run: |
+          pip install apache-airflow==3.0.3 \
+            --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-3.0.3/constraints-3.11.txt"
+          pip install ruff pytest
+      - name: Lint
+        run: ruff check ./dags/
+      - name: Parse test
+        env:
+          AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+          AIRFLOW__CORE__DAGS_FOLDER: ${{ github.workspace }}/dags
+        run: |
+          airflow db migrate
+          airflow dags list
+          airflow dags list-import-errors

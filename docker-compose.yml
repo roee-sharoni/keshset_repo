@@ -2,10 +2,10 @@ x-airflow-common: &airflow-common
   build:
     context: .
     dockerfile: Dockerfile
-  image: myorg/airflow:3.0.3
+  image: ghcr.io/roee-sharoni/keshet-airflow:latest
   environment: &airflow-common-env
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
-    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:${POSTGRES_PASSWORD}@postgres/airflow
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: mysql+pymysql://airflow:${MYSQL_PASSWORD}@mysql/airflow?charset=utf8mb4
     AIRFLOW__CORE__FERNET_KEY: ${FERNET_KEY}
     AIRFLOW__API__SECRET_KEY: ${API_SECRET_KEY}
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
@@ -37,33 +37,37 @@ x-airflow-common: &airflow-common
     - dag-bundles:/opt/airflow/dag_bundles
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
-    postgres:
+    mysql:
       condition: service_healthy
 
 services:
-  postgres:
-    image: postgres:15
+  mysql:
+    image: mysql:8.0
     environment:
-      POSTGRES_USER: airflow
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: airflow
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: airflow
+      MYSQL_USER: airflow
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    command: --explicit_defaults_for_timestamp=1 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - mysql-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "airflow"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1"]
       interval: 10s
       retries: 5
     restart: always
 
   airflow-init:
     <<: *airflow-common
+    environment:
+      <<: *airflow-common-env
+      # Simple Auth Manager: set admin password at init time
+      AIRFLOW__SIMPLE_AUTH_MANAGER__PASSWORDS: "admin:${ADMIN_PASSWORD}"
     entrypoint: /bin/bash
     command:
       - -c
       - |
         airflow db migrate
-        airflow users create --username admin --password ${ADMIN_PASSWORD} \
-          --firstname Admin --lastname User --role Admin --email admin@example.com || true
     restart: "no"
 
   api-server:
@@ -105,5 +109,5 @@ services:
         condition: service_completed_successfully
 
 volumes:
-  postgres-data:
+  mysql-data:
   dag-bundles:
