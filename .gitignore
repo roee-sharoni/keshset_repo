@@ -1,5 +1,6 @@
 .env
 config/gcp-sa.json
+config/simple_auth_manager_passwords.json
 secrets/
 logs/
 __pycache__/

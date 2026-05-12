@@ -1,0 +1,18 @@
+name: Sync Plugins & Config
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - plugins/**
+      - config/**
+
+jobs:
+  sync:
+    name: Sync to VM
+    runs-on: [self-hosted, airflow-vm]
+    steps:
+      - name: Checkout plugins and config
+        run: |
+          git -C /opt/airflow fetch origin
+          git -C /opt/airflow checkout origin/main -- plugins/ config/

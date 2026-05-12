@@ -1,0 +1,14 @@
+{
+  "snowflake_bys": {
+    "conn_type": "snowflake",
+    "host": "account.snowflakecomputing.com",
+    "login": "myuser",
+    "password": "mypassword",
+    "schema": "ANALYTICS",
+    "extra": "{\"warehouse\": \"WH\", \"role\": \"ROLE\", \"database\": \"BYS_DWH\"}"
+  },
+  "slack_alerts": {
+    "conn_type": "slackwebhook",
+    "host": "https://hooks.slack.com/services/T000/B000/XXXX"
+  }
+}
